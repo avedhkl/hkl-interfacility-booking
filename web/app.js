@@ -139,10 +139,10 @@
     var arch = S.scope === 'archive';
     view.innerHTML = '<div class="stats" id="stats"></div>' +
       '<div class="tools"><button class="btn sm sec" id="rf">Muat semula</button>' +
-      '<button class="btn sm sec" id="arch">' + (arch ? 'Senarai aktif' : 'Arkib') + '</button>' +
+      '<button class="btn sm sec" id="arch">' + (arch ? 'Senarai aktif' : 'Archive') + '</button>' +
       (!isPHC() ? '<label style="margin:0;font-weight:400"><input type="checkbox" id="mine"' + (S.mine ? ' checked' : '') + '> Saya sahaja</label>' : '') +
       '<span id="upd"></span></div>' +
-      (arch ? '<p class="hint">Arkib: kes Diendors / Tidak Lulus lebih ' + C.ARCHIVE_HOURS + ' jam. Rekod tidak pernah dipadam.</p>' : '') +
+      (arch ? '<p class="hint">Archive: kes Diendors / Tidak Lulus lebih ' + C.ARCHIVE_HOURS + ' jam. Rekod tidak pernah dipadam.</p>' : '') +
       '<div id="items"></div>' +
       (!isPHC() && !arch ? '<a class="btn fab" href="#/baru">+ Permohonan Baru</a>' : '');
     $('#rf').onclick = function () { refresh(S.scope); };
@@ -166,8 +166,8 @@
     if (!st || !items) return;
     if (!all) { st.innerHTML = ''; items.innerHTML = '<div class="empty">Memuatkan senarai...</div>'; return; }
     var count = function (s) { return all.filter(function (r) { return r.status === s; }).length; };
-    var cards = [['all', 'Jumlah', all.length], [C.STATUS.MENUNGGU, 'Menunggu', count(C.STATUS.MENUNGGU)], [C.STATUS.LULUS, 'Lulus', count(C.STATUS.LULUS)],
-      [C.STATUS.TIDAK_LULUS, 'Tidak Lulus', count(C.STATUS.TIDAK_LULUS)], [C.STATUS.DIENDORS, 'Diendors', count(C.STATUS.DIENDORS)]];
+    var cards = [['all', 'Jumlah Tempahan Kenderaan', all.length], [C.STATUS.MENUNGGU, 'Pending Approval', count(C.STATUS.MENUNGGU)], [C.STATUS.LULUS, 'Approved', count(C.STATUS.LULUS)],
+      [C.STATUS.TIDAK_LULUS, 'Not Approved', count(C.STATUS.TIDAK_LULUS)], [C.STATUS.DIENDORS, 'Tuntutan Claim Ready', count(C.STATUS.DIENDORS)]];
     st.innerHTML = cards.map(function (c) {
       return '<button class="stat' + (S.filter === c[0] ? ' on' : '') + '" data-f="' + esc(c[0]) + '"><b>' + c[2] + '</b><span>' + esc(c[1]) + '</span></button>';
     }).join('');
