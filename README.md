@@ -98,7 +98,8 @@ Change passcodes whenever a PHC staff member leaves.
    Fill the form, photograph the paper form signed and stamped by the ward Sister, submit.
 5. PHC: choose *Penyelia PHC* / *Admin PHC*, enter the passcode. Credentials are remembered on that device; use **Log keluar** on shared phones.
 
-Site URL: `https://<github-user>.github.io/<repo-name>/` (filled in after publishing).
+Site URL: **https://avedhkl.github.io/hkl-interfacility-booking/** (repo: https://github.com/avedhkl/hkl-interfacility-booking).
+Pages is deployed by `.github/workflows/pages.yml`, which publishes the `web/` folder on every push to `main`.
 
 ## Security model (read this)
 
