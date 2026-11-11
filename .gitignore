@@ -1,0 +1,7 @@
+backend/.clasp.json
+.clasprc.json
+node_modules/
+*.log
+.env
+.DS_Store
+.claude/

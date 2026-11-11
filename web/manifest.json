@@ -1,0 +1,10 @@
+{
+  "name": "Tempahan Kenderaan HKL",
+  "short_name": "Kenderaan HKL",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#f4f6fa",
+  "theme_color": "#0b5ed7",
+  "lang": "ms",
+  "icons": [{ "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }]
+}
