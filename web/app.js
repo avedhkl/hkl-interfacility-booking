@@ -42,10 +42,8 @@
   }
 
   function badge(st) {
-    var m = {}; m[C.STATUS.MENUNGGU] = ['b-wait', 'Menunggu']; m[C.STATUS.LULUS] = ['b-ok', 'Lulus'];
-    m[C.STATUS.TIDAK_LULUS] = ['b-no', 'Tidak Lulus']; m[C.STATUS.DIENDORS] = ['b-end', 'Diendors'];
-    var x = m[st] || ['b-wait', st];
-    return '<span class="badge ' + x[0] + '">' + esc(x[1]) + '</span>';
+    var m = {}; m[C.STATUS.MENUNGGU] = 'b-wait'; m[C.STATUS.LULUS] = 'b-ok'; m[C.STATUS.TIDAK_LULUS] = 'b-no'; m[C.STATUS.DIENDORS] = 'b-end';
+    return '<span class="badge ' + (m[st] || 'b-wait') + '">' + esc(C.label(st)) + '</span>';
   }
 
   // ---------- cache (stale-while-revalidate) ----------
@@ -198,8 +196,7 @@
     loadCache('active'); loadCache('archive');
     var r = findReq(id);
     if (!r) { location.hash = '#/'; return; }
-    var h = '<a class="back" href="#/">&larr; Senarai</a><div class="card"><div class="row"><b>' + esc(r.id) + '</b>' + badge(r.status) + '</div>' +
-      '<p class="hint" style="margin:6px 0 0">' + esc(r.status) + '</p></div>';
+    var h = '<a class="back" href="#/">&larr; Senarai</a><div class="card"><div class="row"><b>' + esc(r.id) + '</b>' + badge(r.status) + '</div></div>';
     if (!r.full) {
       h += '<div class="card">' + kv([['Pemohon', r.applicantName], ['Bhg/Unit', r.bhgUnit], ['Jenis Kenderaan', r.jenis], ['Tarikh Pergi', r.tarikhPergi + ' ' + r.masaPergi],
         ['Nama Pesakit', r.amb ? r.amb.namaPesakit : '']]) +
@@ -215,7 +212,7 @@
           ['Peralatan', r.amb.peralatan], ['Rujukan dari', r.amb.kesDari], ['Dirujuk ke', r.amb.kesKe], ['Keterangan', r.amb.keterangan], ['Pegawai Perubatan', r.amb.pegawai]]) + '</div>';
       }
       if (r.phcDecisionAt) {
-        h += '<div class="card"><p class="sec-h">C. Kegunaan Pejabat</p>' + kv([['Keputusan', r.status === C.STATUS.TIDAK_LULUS ? 'Tidak Lulus' : 'Lulus'],
+        h += '<div class="card"><p class="sec-h">C. Kegunaan Pejabat</p>' + kv([['Keputusan', r.status === C.STATUS.TIDAK_LULUS ? C.label(C.STATUS.TIDAK_LULUS) : C.label(C.STATUS.LULUS)],
           ['Oleh', r.phcDecisionBy], ['Pada', r.phcDecisionAt], ['Ulasan', r.phcUlasan], ['Pemandu 1', r.driver1], ['Pemandu 2', r.driver2],
           ['No. Telefon', r.driverPhone], ['No. Kenderaan', r.vehicleNo], ['Diendors oleh', r.endorsedBy], ['Diendors pada', r.endorsedAt]]) + '</div>';
       }
@@ -333,7 +330,7 @@
           S.session.name = payload.fields.applicantName; store('hkl.session', S.session); store('hkl.last', { role: S.session.role, name: S.session.name });
           S.data.active = null; paintWho();
           view.innerHTML = '<div class="ok-screen"><div class="big">&#10003;</div><h2>Permohonan dihantar</h2><p>No. Permohonan: <b>' + esc(res.id) +
-            '</b></p><p class="hint">Status: ' + esc(C.STATUS.MENUNGGU) + '</p><a class="btn" href="#/">Kembali ke senarai</a></div>';
+            '</b></p><p class="hint">Status: ' + esc(C.label(C.STATUS.MENUNGGU)) + '</p><a class="btn" href="#/">Kembali ke senarai</a></div>';
           S.view = 'done';
           refresh('active');
         } catch (e) { showFormErr(e.message); }

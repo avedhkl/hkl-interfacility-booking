@@ -4,7 +4,7 @@
  *   backend/Constants.js   and   web/constants.js
  */
 var HKL = {
-  APP_VERSION: '0.3.1',
+  APP_VERSION: '0.3.2',
   TZ: 'Asia/Kuala_Lumpur',
   ID_PREFIX: 'KDR',
   ARCHIVE_HOURS: 48,
@@ -41,5 +41,13 @@ var HKL = {
     KOD: 'HKL/TAD(U.K)/09/01'
   }
 };
+
+// DISPLAY-ONLY labels. Stored/API status strings above never change.
+HKL.STATUS_LABEL = {};
+HKL.STATUS_LABEL[HKL.STATUS.MENUNGGU] = 'Pending Approval';
+HKL.STATUS_LABEL[HKL.STATUS.LULUS] = 'Approved';
+HKL.STATUS_LABEL[HKL.STATUS.TIDAK_LULUS] = 'Not Approved';
+HKL.STATUS_LABEL[HKL.STATUS.DIENDORS] = 'Tuntutan Claim Ready';
+HKL.label = function (s) { return HKL.STATUS_LABEL[s] || s; };
 
 if (typeof module !== 'undefined' && module.exports) { module.exports = HKL; }

@@ -23,8 +23,8 @@
 
     if (role === C.ROLES.PHC && r.status === C.STATUS.MENUNGGU) {
       el.innerHTML = '<div class="card"><p class="sec-h">Keputusan Penyelia PHC</p>' +
-        '<div class="seg"><label><input type="radio" name="dec" value="' + esc(C.STATUS.LULUS) + '"><span>Lulus</span></label>' +
-        '<label><input type="radio" name="dec" value="' + esc(C.STATUS.TIDAK_LULUS) + '"><span>Tidak Lulus</span></label></div>' +
+        '<div class="seg"><label><input type="radio" name="dec" value="' + esc(C.STATUS.LULUS) + '"><span>' + esc(C.label(C.STATUS.LULUS)) + '</span></label>' +
+        '<label><input type="radio" name="dec" value="' + esc(C.STATUS.TIDAK_LULUS) + '"><span>' + esc(C.label(C.STATUS.TIDAK_LULUS)) + '</span></label></div>' +
         '<div id="dr" hidden>' +
         '<label for="d1">Nama Pemandu 1</label><input id="d1" type="text" maxlength="80">' +
         '<label for="d2">Nama Pemandu 2 <small>(jika ada)</small></label><input id="d2" type="text" maxlength="80">' +
@@ -43,11 +43,11 @@
       $('#dbtn').onclick = function () {
         var sel = el.querySelector('input[name=dec]:checked'), v = function (id) { return $('#' + id).value.trim(); };
         errBox('');
-        if (!sel) return errBox('Pilih Lulus atau Tidak Lulus.');
+        if (!sel) return errBox('Pilih ' + C.label(C.STATUS.LULUS) + ' atau ' + C.label(C.STATUS.TIDAK_LULUS) + '.');
         var lulus = sel.value === C.STATUS.LULUS;
         if (lulus && (!v('d1') || !v('dph') || !v('dv'))) return errBox('Nama Pemandu 1, No. Telefon dan No. Kenderaan diperlukan.');
-        if (!lulus && !v('dul')) return errBox('Ulasan diperlukan untuk Tidak Lulus.');
-        if (!window.confirm('Sahkan keputusan: ' + sel.value + ' untuk ' + r.id + '?')) return;
+        if (!lulus && !v('dul')) return errBox('Ulasan diperlukan untuk ' + C.label(C.STATUS.TIDAK_LULUS) + '.');
+        if (!window.confirm('Sahkan keputusan: ' + C.label(sel.value) + ' untuk ' + r.id + '?')) return;
         ctx.busy($('#dbtn'), async function () {
           try {
             done(await ctx.api('decide', ctx.authP({ id: r.id, decision: sel.value, ulasan: v('dul'), driver1: v('d1'), driver2: v('d2'), driverPhone: v('dph'), vehicleNo: v('dv') })));
@@ -90,9 +90,9 @@
         });
       };
     } else if (r.status === C.STATUS.MENUNGGU) {
-      el.innerHTML = '<div class="card hint">Menunggu keputusan Penyelia PHC.</div>';
+      el.innerHTML = '<div class="card hint">Pending Approval: menunggu keputusan Penyelia PHC.</div>';
     } else if (r.status === C.STATUS.LULUS) {
-      el.innerHTML = '<div class="card hint">Lulus. Menunggu endorsan Admin PHC.</div>';
+      el.innerHTML = '<div class="card hint">Approved. Menunggu endorsan Admin PHC.</div>';
     } else {
       el.innerHTML = '';
     }
