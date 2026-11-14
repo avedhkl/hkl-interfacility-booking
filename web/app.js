@@ -136,7 +136,7 @@
     loadCache(S.scope);
     var arch = S.scope === 'archive';
     view.innerHTML = '<div class="stats" id="stats"></div>' +
-      '<div class="tools"><button class="btn sm sec" id="rf">Muat semula</button>' +
+      '<div class="tools"><button class="btn sm sec" id="rf">Refresh</button>' +
       '<button class="btn sm sec" id="arch">' + (arch ? 'Senarai aktif' : 'Archive') + '</button>' +
       (!isPHC() ? '<label style="margin:0;font-weight:400"><input type="checkbox" id="mine"' + (S.mine ? ' checked' : '') + '> Saya sahaja</label>' : '') +
       '<span id="upd"></span></div>' +
