@@ -1,6 +1,6 @@
 {
-  "name": "Tempahan Kenderaan HKL",
-  "short_name": "Kenderaan HKL",
+  "name": "TransferLink HKL - Interfacility & Intrafacility Transfer Booking System",
+  "short_name": "TransferLink",
   "start_url": "./",
   "display": "standalone",
   "background_color": "#f4f6fa",
