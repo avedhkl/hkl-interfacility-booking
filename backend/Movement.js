@@ -8,6 +8,7 @@
 
 const STEPS_ = HKL.MOVE_STEPS;
 const UNDO_WINDOW_MIN_ = 15;
+const MAX_TRIP_CASES_ = 5;
 
 // ---------- helpers ----------
 
@@ -144,7 +145,7 @@ function tripView_(moves, r, amb, now) {
     if (idle > M.STALL_MIN) flags.push({ code: 'STALLED', text: 'No update for ' + idle + ' min' });
   }
   return {
-    state: state, lastStep: last,
+    state: state, lastStep: last, tripId: byStep[1] ? String(byStep[1].TripID || '') : '',
     nextStep: last >= 6 ? 0 : last + 1,
     scheduledAt: sched ? sched.toISOString() : '', scheduledTime: sched ? fmtDateTime_(sched) : '',
     steps: steps,
@@ -196,8 +197,19 @@ function actionDriverCases_(p) {
   return { vehicleNo: a.vehicleNo, serverTime: new Date(now).toISOString(), places: placesView_(), cases: out };
 }
 
+/** Cases to act on: p.ids (array, a trip with 1-5 patients) or the single p.id. */
+function idsOf_(p) {
+  const raw = Array.isArray(p.ids) ? p.ids : [p.id];
+  const ids = [];
+  raw.forEach(function (x) { const s = String(x || '').trim(); if (s && ids.indexOf(s) === -1) ids.push(s); });
+  if (!ids.length) throw userErr_('Pilih sekurang-kurangnya satu kes.');
+  if (ids.length > MAX_TRIP_CASES_) throw userErr_('Maksimum ' + MAX_TRIP_CASES_ + ' kes dalam satu perjalanan.');
+  return ids;
+}
+
 function actionDriverStep_(p) {
   const a = authDriver_(p);
+  const ids = idsOf_(p);
   const step = parseInt(p.step, 10);
   if (!(step >= 1 && step <= 6)) throw userErr_('Langkah tidak sah.');
   const ck = clean_(p.clientKey, 60);
@@ -210,50 +222,63 @@ function actionDriverStep_(p) {
   lock.waitLock(25000);
   try {
     const rt = readTable_('Requests');
-    const r = findReq_(rt, String(p.id || ''));
-    if (normPlate_(r.VehicleNo) !== a.plate) throw userErr_('Kes ini tidak ditugaskan kepada kenderaan anda.');
-    if (r.Status !== HKL.STATUS.LULUS && r.Status !== HKL.STATUS.DIENDORS) throw userErr_('Kes ini belum diluluskan.');
+    const reqs = ids.map(function (id) { return findReq_(rt, id); });
+    reqs.forEach(function (r) {
+      if (normPlate_(r.VehicleNo) !== a.plate) throw userErr_('Kes ' + r.RequestID + ' tidak ditugaskan kepada kenderaan anda.');
+      if (r.Status !== HKL.STATUS.LULUS && r.Status !== HKL.STATUS.DIENDORS) throw userErr_('Kes ' + r.RequestID + ' belum diluluskan.');
+    });
 
     const mt = readTable_('Movements');
     const now = new Date();
-    const mine = mt.rows.filter(function (x) { return x.RequestID === r.RequestID; });
+    const liveOf = function (id) {
+      return mt.rows.filter(function (x) { return x.RequestID === id && String(x.Voided || '').toUpperCase() !== 'Y'; })
+        .sort(function (x, y) { return num_(x.Step) - num_(y.Step); });
+    };
     // Idempotent: the same tap re-sent after a flaky connection returns the current state.
-    if (ck && mine.some(function (x) { return String(x.ClientKey) === ck; })) {
-      return finishStep_(r, now);
-    }
-    const live = mine.filter(function (x) { return String(x.Voided || '').toUpperCase() !== 'Y'; })
-      .sort(function (x, y) { return num_(x.Step) - num_(y.Step); });
-    const last = live.length ? num_(live[live.length - 1].Step) : 0;
-    if (step !== last + 1) {
-      throw userErr_(step <= last ? 'Langkah ini sudah direkodkan. Muat semula.' : 'Sila rekod langkah sebelumnya dahulu.');
-    }
-    let driver = clean_(p.driverName, 80);
+    if (ck && mt.rows.some(function (x) { return x.RequestID === ids[0] && String(x.ClientKey) === ck; })) return finishStep_(reqs, now);
+
+    const lives = ids.map(liveOf);
+    const lasts = lives.map(function (l) { return l.length ? num_(l[l.length - 1].Step) : 0; });
+    lasts.forEach(function (last, i) {
+      if (step !== last + 1) {
+        throw userErr_(step <= last ? 'Langkah ini sudah direkodkan untuk ' + ids[i] + '. Muat semula.' : 'Sila rekod langkah sebelumnya dahulu (' + ids[i] + ').');
+      }
+    });
+    let driver = clean_(p.driverName, 80), tripId = '';
     if (step === 1) {
       if (driver.length < 2) throw userErr_('Nama pemandu diperlukan untuk memulakan perjalanan.');
+      tripId = 'TR-' + Utilities.formatDate(now, HKL.TZ, 'yyMMdd') + '-' + Utilities.getUuid().replace(/-/g, '').substring(0, 5).toUpperCase();
     } else {
-      driver = String(live[0].DriverName || driver);
+      const trips = lives.map(function (l) { return String(l[0].TripID || ''); });
+      if (trips.some(function (t) { return t !== trips[0]; })) throw userErr_('Kes yang dipilih bukan dalam perjalanan yang sama.');
+      tripId = trips[0];
+      driver = String(lives[0][0].DriverName || driver);
     }
     // Event time: the tap time. Offline taps may carry their original time (bounded, never in the future, never before the previous step).
     let at = now;
     const ca = p.clientAt ? new Date(p.clientAt) : null;
     if (ca && !isNaN(ca.getTime()) && ca.getTime() <= now.getTime() + 120000 && now.getTime() - ca.getTime() <= HKL.MOVE.BACKFILL_MAX_HOURS * 3600000) at = ca;
-    if (last) { const prev = toDate_(live[live.length - 1].At); if (prev && at.getTime() < prev.getTime()) at = prev; }
+    lives.forEach(function (l) { if (l.length) { const prev = toDate_(l[l.length - 1].At); if (prev && at.getTime() < prev.getTime()) at = prev; } });
 
-    appendObj_(mt, {
-      RequestID: r.RequestID, Step: step, StepCode: STEPS_[step - 1].code, At: at, ReceivedAt: now,
-      VehicleNo: a.vehicleNo, DriverName: driver,
-      Lat: hasGps ? lat.toFixed(6) : '', Lng: hasGps ? lng.toFixed(6) : '', AccuracyM: hasGps && isFinite(acc) ? Math.round(acc) : '',
-      Source: source, ClientKey: ck, Voided: '', VoidedAt: ''
+    // One row per case, all with the SAME time, GPS fix and TripID (patients travelling together).
+    reqs.forEach(function (r) {
+      appendObj_(mt, {
+        RequestID: r.RequestID, Step: step, StepCode: STEPS_[step - 1].code, At: at, ReceivedAt: now, TripID: tripId,
+        VehicleNo: a.vehicleNo, DriverName: driver,
+        Lat: hasGps ? lat.toFixed(6) : '', Lng: hasGps ? lng.toFixed(6) : '', AccuracyM: hasGps && isFinite(acc) ? Math.round(acc) : '',
+        Source: source, ClientKey: ck, Voided: '', VoidedAt: ''
+      });
     });
-    return finishStep_(r, now);
+    return finishStep_(reqs, now);
   } finally {
     lock.releaseLock();
   }
 }
 
-function finishStep_(r, now) {
-  const amb = ambMap_()[r.RequestID];
-  return { case: caseView_(r, amb, tripView_(movesByReq_()[r.RequestID], r, amb, now.getTime ? now.getTime() : now)) };
+function finishStep_(reqs, now) {
+  const amb = ambMap_(), mv = movesByReq_(), ms = now.getTime ? now.getTime() : now;
+  const cases = reqs.map(function (r) { return caseView_(r, amb[r.RequestID], tripView_(mv[r.RequestID], r, amb[r.RequestID], ms)); });
+  return { cases: cases, case: cases[0] };
 }
 
 function actionDriverUndo_(p) {
@@ -261,19 +286,25 @@ function actionDriverUndo_(p) {
   const lock = LockService.getScriptLock();
   lock.waitLock(25000);
   try {
+    const ids = idsOf_(p);
     const rt = readTable_('Requests');
-    const r = findReq_(rt, String(p.id || ''));
-    if (normPlate_(r.VehicleNo) !== a.plate) throw userErr_('Kes ini tidak ditugaskan kepada kenderaan anda.');
+    const reqs = ids.map(function (id) { return findReq_(rt, id); });
+    reqs.forEach(function (r) { if (normPlate_(r.VehicleNo) !== a.plate) throw userErr_('Kes ' + r.RequestID + ' tidak ditugaskan kepada kenderaan anda.'); });
     const mt = readTable_('Movements');
-    const live = mt.rows.filter(function (x) { return x.RequestID === r.RequestID && String(x.Voided || '').toUpperCase() !== 'Y'; })
-      .sort(function (x, y) { return num_(x.Step) - num_(y.Step); });
-    if (!live.length) throw userErr_('Tiada langkah untuk dibatalkan.');
-    const lastRow = live[live.length - 1];
-    const recv = toDate_(lastRow.ReceivedAt);
-    if (!recv || Date.now() - recv.getTime() > UNDO_WINDOW_MIN_ * 60000) throw userErr_('Langkah hanya boleh dibatalkan dalam ' + UNDO_WINDOW_MIN_ + ' minit. Hubungi PHC.');
+    const lastRows = reqs.map(function (r) {
+      const live = mt.rows.filter(function (x) { return x.RequestID === r.RequestID && String(x.Voided || '').toUpperCase() !== 'Y'; })
+        .sort(function (x, y) { return num_(x.Step) - num_(y.Step); });
+      if (!live.length) throw userErr_('Tiada langkah untuk dibatalkan (' + r.RequestID + ').');
+      return live[live.length - 1];
+    });
+    if (lastRows.some(function (x) { return num_(x.Step) !== num_(lastRows[0].Step); })) throw userErr_('Kes yang dipilih berada pada langkah berbeza.');
+    lastRows.forEach(function (row) {
+      const recv = toDate_(row.ReceivedAt);
+      if (!recv || Date.now() - recv.getTime() > UNDO_WINDOW_MIN_ * 60000) throw userErr_('Langkah hanya boleh dibatalkan dalam ' + UNDO_WINDOW_MIN_ + ' minit. Hubungi PHC.');
+    });
     const now = new Date();
-    updateObj_(mt, lastRow._row, { Voided: 'Y', VoidedAt: now });
-    return finishStep_(r, now);
+    lastRows.forEach(function (row) { updateObj_(mt, row._row, { Voided: 'Y', VoidedAt: now }); });
+    return finishStep_(reqs, now);
   } finally {
     lock.releaseLock();
   }

@@ -67,6 +67,12 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--pri);border-colo
 .bigbtn{min-height:68px;font-size:19px;flex-direction:column;gap:2px}.bigbtn small{font-weight:400;font-size:12px;opacity:.9}
 .bigbtn.busy{flex-direction:row}
 .flag{background:var(--warnbg);color:var(--warn);border-radius:8px;padding:6px 10px;font-size:13px;font-weight:600;margin:6px 0}
-.dcase .banner{margin:10px 0 0}
+.dtrip .banner,#werr{margin:10px 0 0}
+.pick{display:flex;gap:12px;align-items:flex-start;cursor:pointer;font-weight:400;margin:8px 0}
+.pick input{flex:none;width:26px;height:26px;margin:2px 0 0;accent-color:var(--pri)}
+.pick.on{border-color:var(--pri);box-shadow:0 0 0 1px var(--pri)}
+.pickbody{flex:1;min-width:0}
+.tcase{margin:3px 0;font-size:14px}
+.tcases{margin:6px 0 4px}
 .linkbtn{display:block;margin:12px auto 0;background:none;border:0;color:var(--mut);text-decoration:underline;font:inherit;font-size:13px;cursor:pointer}
 a.back{display:inline-block;margin:8px 0;color:var(--pri);font-weight:600;text-decoration:none;cursor:pointer}

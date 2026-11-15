@@ -17,7 +17,7 @@ const COLS_ = {
   // Geofence places for auto-assist. Edit freely. RadiusM blank = default.
   Places: ['PlaceName', 'Lat', 'Lng', 'RadiusM', 'Kind'],
   // One row per recorded step. Rows are never deleted; an undone step is marked Voided = Y.
-  Movements: ['RequestID', 'Step', 'StepCode', 'At', 'ReceivedAt', 'VehicleNo', 'DriverName', 'Lat', 'Lng', 'AccuracyM',
+  Movements: ['RequestID', 'Step', 'StepCode', 'At', 'ReceivedAt', 'VehicleNo', 'DriverName', 'TripID', 'Lat', 'Lng', 'AccuracyM',
     'Source', 'ClientKey', 'Voided', 'VoidedAt']
 };
 // Real date-time cells; everything else is plain text.
