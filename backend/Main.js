@@ -34,7 +34,12 @@ const ACTION_MAP_ = {
   submit: actionSubmit_,
   decide: actionDecide_,
   endorse: actionEndorse_,
-  saveClaim: actionSaveClaim_
+  saveClaim: actionSaveClaim_,
+  driverLogin: actionDriverLogin_,
+  driverCases: actionDriverCases_,
+  driverStep: actionDriverStep_,
+  driverUndo: actionDriverUndo_,
+  fleet: actionFleet_
 };
 
 function userErr_(msg) { const e = new Error(msg); e.user = true; return e; }

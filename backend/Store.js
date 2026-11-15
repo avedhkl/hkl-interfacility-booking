@@ -11,10 +11,18 @@ const COLS_ = {
     'PHCDecisionBy', 'PHCDecisionAt', 'PHCUlasan', 'DriverName1', 'DriverName2', 'DriverPhone', 'VehicleNo',
     'AdminPHCEndorsedBy', 'AdminPHCEndorsedAt', 'ClaimPdfRef', 'ClaimPdfAt'],
   Ambulance: ['RequestID', 'TarikhMasaDiperlukan', 'NamaPesakit', 'PeralatanDiperlukan', 'KesRujukanDariHospital',
-    'KesDirujukKeHospital', 'KeteranganRingkasKes', 'NamaPegawaiPerubatan']
+    'KesDirujukKeHospital', 'KeteranganRingkasKes', 'NamaPegawaiPerubatan'],
+  // Phase 2. Vehicles: type a PIN in NewPin, then menu "TransferLink > Apply vehicle PINs" (stores a hash, clears NewPin).
+  Vehicles: ['VehicleNo', 'NewPin', 'PinHash', 'Active', 'Notes'],
+  // Geofence places for auto-assist. Edit freely. RadiusM blank = default.
+  Places: ['PlaceName', 'Lat', 'Lng', 'RadiusM', 'Kind'],
+  // One row per recorded step. Rows are never deleted; an undone step is marked Voided = Y.
+  Movements: ['RequestID', 'Step', 'StepCode', 'At', 'ReceivedAt', 'VehicleNo', 'DriverName', 'Lat', 'Lng', 'AccuracyM',
+    'Source', 'ClientKey', 'Voided', 'VoidedAt']
 };
 // Real date-time cells; everything else is plain text.
-const DATETIME_COLS_ = { Requests: ['SubmittedAt', 'PHCDecisionAt', 'AdminPHCEndorsedAt', 'ClaimPdfAt'], Ambulance: [] };
+const DATETIME_COLS_ = { Requests: ['SubmittedAt', 'PHCDecisionAt', 'AdminPHCEndorsedAt', 'ClaimPdfAt'], Ambulance: [],
+  Vehicles: [], Places: [], Movements: ['At', 'ReceivedAt', 'VoidedAt'] };
 
 /** Safe to run any number of times: creates missing tabs/headers only; never clears or reorders data. */
 function setupSheets() {
@@ -63,7 +71,24 @@ function ensureFolder_(prop, name) {
 function setupAll() {
   setupSheets();
   setupDrive();
+  seedPlaces_();
   checkConfig();
+}
+
+/** Adds the HKL geofence only if the Places tab is empty. Coordinates are approximate: Admin should verify/adjust. */
+function seedPlaces_() {
+  const t = readTable_Safe_('Places');
+  if (t && t.rows.length === 0) {
+    appendObj_(t, { PlaceName: 'HKL', Lat: '3.1719', Lng: '101.7017', RadiusM: '400', Kind: 'home' });
+    Logger.log('Places: seeded HKL (approximate - please verify on the map).');
+  }
+}
+
+function readTable_Safe_(name) { try { return readTable_(name); } catch (e) { return null; } }
+
+/** Sheet menu so Admin can apply PINs without opening the script editor. */
+function onOpen() {
+  SpreadsheetApp.getUi().createMenu('TransferLink').addItem('Apply vehicle PINs', 'applyVehiclePins').addToUi();
 }
 
 function checkConfig() {

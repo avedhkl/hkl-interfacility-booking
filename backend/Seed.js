@@ -1,3 +1,15 @@
+/** DUMMY vehicles for testing the driver tab: plates WXX 1234 and WXX 5678, PIN 1234 (dummy only). Skips plates that exist. */
+function seedDummyVehicles() {
+  const t = readTable_Safe_('Vehicles');
+  if (!t) throw new Error('Tab Vehicles tiada. Jalankan setupAll().');
+  ['WXX 1234', 'WXX 5678'].forEach(function (pl) {
+    if (!t.rows.some(function (r) { return normPlate_(r.VehicleNo) === normPlate_(pl); })) {
+      appendObj_(t, { VehicleNo: pl, NewPin: '1234', Active: 'Y', Notes: 'DUMMY - change PIN or set Active=N before go-live' });
+    }
+  });
+  applyVehiclePins();
+}
+
 /** DUMMY DATA ONLY. Run manually from the editor. Skips if dummy rows already exist. Never overwrites. */
 function seedDummy() {
   const rt = readTable_('Requests');
