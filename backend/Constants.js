@@ -1,10 +1,10 @@
-/*
+﻿/*
  * SHARED CONSTANTS - single source of truth for backend (Apps Script) and frontend.
  * Edit ONLY this file. scripts/sync-shared.ps1 copies it to:
  *   backend/Constants.js   and   web/constants.js
  */
 var HKL = {
-  APP_VERSION: '0.4.0',
+  APP_VERSION: '0.4.1',
   TZ: 'Asia/Kuala_Lumpur',
   ID_PREFIX: 'KDR',
   ARCHIVE_HOURS: 48,

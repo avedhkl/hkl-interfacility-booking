@@ -9,6 +9,6 @@ Copy-Item $src (Join-Path $root 'web\constants.js') -Force
 $ver = (Select-String -Path $src -Pattern "APP_VERSION: '([^']+)'").Matches[0].Groups[1].Value
 $idx = Join-Path $root 'web\index.html'
 $html = [IO.File]::ReadAllText($idx)
-$html = [regex]::Replace($html, '(?<=(?:src|href)=")((?:config|constants|app|actions|claim)\.js|style\.css|vendor/jspdf\.umd\.min\.js)(\?v=[^"]*)?(?=")', ('$1?v=' + $ver))
+$html = [regex]::Replace($html, '(?<=(?:src|href)=")((?:config|constants|app|actions|claim|driver)\.js|style\.css|vendor/jspdf\.umd\.min\.js)(\?v=[^"]*)?(?=")', ('$1?v=' + $ver))
 [IO.File]::WriteAllText($idx, $html)
 Write-Host "Synced shared/constants.js (v$ver) -> backend/Constants.js, web/constants.js; stamped web/index.html"

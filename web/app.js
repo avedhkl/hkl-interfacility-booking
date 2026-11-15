@@ -72,6 +72,7 @@
   function route() {
     window.scrollTo(0, 0);
     if (!S.session) return renderLogin();
+    if (S.session.role === C.ROLES.DRIVER) return window.renderDriver({ S: S, api: api, busy: busy, banner: banner, esc: esc, view: view, store: store, paintWho: paintWho, logout: logout });
     var h = location.hash || '#/';
     if (h.indexOf('#/r/') === 0) return renderDetail(decodeURIComponent(h.slice(4)));
     if (h === '#/baru' && !isPHC()) return renderForm();
@@ -98,30 +99,52 @@
   function renderLogin(msg) {
     S.view = 'login'; paintWho(); banner(msg || '');
     var last = store('hkl.last') || {};
-    var roles = [C.ROLES.PEMOHON, C.ROLES.PHC, C.ROLES.ADMIN];
+    var roles = [C.ROLES.PEMOHON, C.ROLES.PHC, C.ROLES.ADMIN, C.ROLES.DRIVER];
     view.innerHTML = '<h2>Log masuk</h2><div class="card"><form id="lf" autocomplete="off">' +
       '<label>Peranan</label><div class="seg">' + roles.map(function (r) {
         return '<label><input type="radio" name="role" value="' + esc(r) + '"' + ((last.role || roles[0]) === r ? ' checked' : '') + '><span>' + esc(r) + '</span></label>';
       }).join('') + '</div>' +
-      '<label for="lname">Nama</label><input id="lname" type="text" required maxlength="80" value="' + esc(last.name || '') + '" autocomplete="name">' +
-      '<div id="pcw"><label for="lpc">Kata laluan PHC</label><input id="lpc" type="password" autocomplete="current-password"></div>' +
-      '<p class="hint">Nama dan peranan diingati pada peranti ini.</p>' +
+      '<label for="lname" id="lnl">Nama</label><input id="lname" type="text" required maxlength="80" value="' + esc(last.name || '') + '" autocomplete="name">' +
+      '<div id="pcw"><label for="lpc" id="lpl">Kata laluan PHC</label><input id="lpc" type="password" autocomplete="current-password"></div>' +
+      '<p class="hint" id="lhint">Nama dan peranan diingati pada peranti ini.</p>' +
       '<button class="btn block" id="lbtn" type="submit">Masuk</button></form></div>';
-    function sync() { $('#pcw').hidden = document.querySelector('input[name=role]:checked').value === C.ROLES.PEMOHON; }
+    var wasDrv = null;
+    function sync() {
+      var r = document.querySelector('input[name=role]:checked').value, drv = r === C.ROLES.DRIVER;
+      $('#pcw').hidden = r === C.ROLES.PEMOHON;
+      $('#lnl').textContent = drv ? 'No. Kenderaan' : 'Nama';
+      $('#lpl').textContent = drv ? 'PIN kenderaan' : 'Kata laluan PHC';
+      $('#lname').autocomplete = drv ? 'off' : 'name'; $('#lname').setAttribute('autocapitalize', drv ? 'characters' : 'words');
+      $('#lpc').setAttribute('inputmode', drv ? 'numeric' : 'text');
+      $('#lhint').textContent = drv ? 'Satu PIN untuk setiap kenderaan. Nama pemandu diisi semasa memulakan perjalanan.' : 'Nama dan peranan diingati pada peranti ini.';
+      if (wasDrv !== drv) { // swap the remembered value when switching between person roles and the vehicle role
+        $('#lname').value = drv ? (store('hkl.lastVehicle') || '') : (last.role === C.ROLES.DRIVER ? (store('hkl.lastName') || '') : (last.name || ''));
+        wasDrv = drv;
+      }
+    }
     Array.prototype.forEach.call(view.querySelectorAll('input[name=role]'), function (i) { i.onchange = sync; });
     sync();
     $('#lf').onsubmit = function (ev) {
       ev.preventDefault();
       var role = document.querySelector('input[name=role]:checked').value, name = $('#lname').value.trim(), pc = $('#lpc').value;
-      if (!name) return banner('Sila isi nama.');
-      if (role !== C.ROLES.PEMOHON && !pc) return banner('Sila isi kata laluan.');
+      if (!name) return banner(role === C.ROLES.DRIVER ? 'Sila isi no. kenderaan.' : 'Sila isi nama.');
+      if (role !== C.ROLES.PEMOHON && !pc) return banner(role === C.ROLES.DRIVER ? 'Sila isi PIN.' : 'Sila isi kata laluan.');
       busy($('#lbtn'), async function () {
         banner('');
+        if (role === C.ROLES.DRIVER) {
+          try {
+            var dl = await api('driverLogin', { vehicle: name, pin: pc });
+            S.session = { role: role, name: dl.vehicleNo, vehicle: dl.vehicleNo, pin: pc };
+            store('hkl.session', S.session); store('hkl.lastVehicle', dl.vehicleNo); store('hkl.last', { role: role, name: dl.vehicleNo });
+            location.hash = '#/'; route();
+          } catch (e) { S.session = null; banner(e.message); }
+          return;
+        }
         var s = { role: role, name: name, passcode: role === C.ROLES.PEMOHON ? '' : pc };
         S.session = s;
         try {
           var d = await api('list', authP({ scope: 'active' }));
-          store('hkl.session', s); store('hkl.last', { role: role, name: name });
+          store('hkl.session', s); store('hkl.last', { role: role, name: name }); store('hkl.lastName', name);
           S.data = { active: d.requests }; S.updated = { active: Date.now() };
           store(ckey('active'), { at: S.updated.active, requests: d.requests });
           location.hash = '#/'; route();

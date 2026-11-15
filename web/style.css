@@ -58,4 +58,15 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--pri);border-colo
 .seg input:checked+span{background:var(--pri);color:var(--pri-ink)}
 .empty{text-align:center;color:var(--mut);padding:30px 10px}
 .ok-screen{text-align:center;padding:30px 10px}.ok-screen .big{font-size:42px}
+.steps{list-style:none;margin:12px 0;padding:0;display:grid;gap:4px}
+.steps li{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--mut)}
+.steps .dot{flex:none;width:22px;height:22px;border-radius:50%;border:1.5px solid var(--line);display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700}
+.steps li em{margin-left:auto;font-style:normal;font-size:12px}
+.steps li.done{color:var(--ok)}.steps li.done .dot{background:var(--ok);border-color:var(--ok);color:var(--card)}
+.steps li.next{color:var(--ink);font-weight:700}.steps li.next .dot{border-color:var(--pri);color:var(--pri)}
+.bigbtn{min-height:68px;font-size:19px;flex-direction:column;gap:2px}.bigbtn small{font-weight:400;font-size:12px;opacity:.9}
+.bigbtn.busy{flex-direction:row}
+.flag{background:var(--warnbg);color:var(--warn);border-radius:8px;padding:6px 10px;font-size:13px;font-weight:600;margin:6px 0}
+.dcase .banner{margin:10px 0 0}
+.linkbtn{display:block;margin:12px auto 0;background:none;border:0;color:var(--mut);text-decoration:underline;font:inherit;font-size:13px;cursor:pointer}
 a.back{display:inline-block;margin:8px 0;color:var(--pri);font-weight:600;text-decoration:none;cursor:pointer}
