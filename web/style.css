@@ -77,6 +77,11 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--pri);border-colo
 .prow input{flex:none;width:24px;height:24px;margin:1px 0 0;accent-color:var(--pri)}
 .prow.on{border-color:var(--pri);box-shadow:0 0 0 1px var(--pri)}
 .pbody{flex:1;min-width:0;font-size:14px}.pstat{color:var(--mut);font-size:13px;margin-top:2px}.pstat.ok{color:var(--ok)}
+.chk{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-weight:600;font-size:14px;margin:12px 0 0}
+.chk input{width:20px;height:20px;accent-color:var(--pri)}.chk small{flex-basis:100%;font-weight:400;color:var(--mut);font-size:12px;margin-left:28px}
+.qbar{display:flex;justify-content:space-between;align-items:center;gap:8px;background:var(--warnbg);border-color:transparent;color:var(--warn);font-weight:600;font-size:14px}
+.suggest{background:var(--endbg);color:var(--end);border-radius:10px;padding:10px 12px;margin:10px 0;font-size:14px}
+.sbtns{display:flex;gap:8px;margin-top:8px}.sbtns .btn{flex:1}
 .tcase{margin:3px 0;font-size:14px}
 .tcases{margin:6px 0 4px}
 .linkbtn{display:block;margin:12px auto 0;background:none;border:0;color:var(--mut);text-decoration:underline;font:inherit;font-size:13px;cursor:pointer}

@@ -32,6 +32,19 @@ On a Diendors request, PHC/Admin tap **Jana PDF Tuntutan**. The browser draws th
 driver/vehicle fields, No. Keluaran / Pindaan / Tarikh Kuatkuasa, Syarat-Syarat) filled from the Sheet, and appends the signed-form photo as the last page.
 A copy is saved to the private Drive folder `HKL-KDR-PDF-Tuntutan (PRIVATE)` (newest copy replaces the previous one).
 
+### Vehicle movement tracking (phase 2)
+Login role **Pemandu** = one PIN per vehicle plate (no personal login; the driver types his name at "Journey starts").
+The driver ticks the patients travelling together (1-5 cases) and a big button moves the ticked patients through 6 steps
+(Journey starts, Arrived at waiting area, Departed with patient, Arrived at destination, Departed destination, Arrived back).
+Each patient has his own timeline inside the trip, so patients can arrive at different times.
+
+- **Vehicles tab:** type plate + PIN (4-8 digits) in `NewPin`, then Sheet menu **TransferLink > Apply vehicle PINs** (stores a salted hash, clears the cell). `Active = N` disables a vehicle.
+- **Movements tab:** one row per patient per step (time, GPS, driver, source Manual/Auto, TripID). Undo marks `Voided = Y`; rows are never deleted.
+- **Places tab (geofences for suggestions):** `PlaceName, Lat, Lng, RadiusM, Kind`. Kinds: `home` (HKL, used for "Arrived back"), `pickup` (a lobby/ward entrance: enables the "Arrived at waiting area" suggestion; use a small radius, e.g. 50 m), anything else or `destination` (a destination hospital: enables "Arrived at destination"). The seeded HKL point is approximate: verify it on a map.
+- **Instant + offline:** taps appear at once and go through a queue on the phone (kept if the app is closed); the real tap time is sent when the signal returns. One GPS fix is read in the background after each tap. Undo needs a connection.
+- **Auto-assist:** `HKL.MOVE.AUTO_MODE` in `shared/constants.js` = `suggest` (default: "Arrived? Yes / Not yet"), `auto` (records by itself) or `off`. While the screen is open and a trip is running, a low-power position check runs every `AUTO_POLL_SEC` (45 s). A web page cannot read GPS with the screen off, so the button always remains. Driver can switch it off on the phone.
+- Delay flags (Admin monitor): late start (> 15 min after the requested time), not started, waiting > 45 min at pickup, no update > 90 min. Limits are in `HKL.MOVE`.
+
 ## Repository layout
 
 ```

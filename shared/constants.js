@@ -4,7 +4,7 @@
  *   backend/Constants.js   and   web/constants.js
  */
 var HKL = {
-  APP_VERSION: '0.4.3',
+  APP_VERSION: '0.5.0',
   TZ: 'Asia/Kuala_Lumpur',
   ID_PREFIX: 'KDR',
   ARCHIVE_HOURS: 48,
@@ -37,7 +37,13 @@ var HKL = {
     LONG_WAIT_MIN: 45,       // waiting area -> departed with patient longer than this is flagged
     STALL_MIN: 90,           // no update for this long while a trip is in progress is flagged
     BACKFILL_MAX_HOURS: 12,  // offline taps older than this are rejected
-    GEO_DEFAULT_RADIUS_M: 300
+    GEO_DEFAULT_RADIUS_M: 300,
+    // Auto-assist (driver screen): 'suggest' = ask "Arrived?" and the driver confirms; 'auto' = record by itself; 'off' = buttons only.
+    AUTO_MODE: 'suggest',
+    AUTO_POLL_SEC: 45,         // position check interval, only while the screen is open and a trip is running
+    MAX_FIX_ACCURACY_M: 250,   // ignore positions less accurate than this
+    LEAVE_DEST_M: 600,         // "Departed destination" suggested when this far from where arrival was recorded
+    SUGGEST_DISMISS_MIN: 10    // "Bukan lagi" silences that suggestion for this long
   },
 
   JENIS_KENDERAAN: ['Kereta', 'Van', 'Lori', 'Bas', 'Ambulans', 'Lain-lain'],
