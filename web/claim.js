@@ -204,7 +204,7 @@
     var wt = T(doc, 'Tarikh :', 29.7, 123.4, { size: 8.5 }); V(doc, (r.phcDecisionAt || '').slice(0, 10), 29.7 + wt + 1.5, 123.4, 40);
     var wp = T(doc, 'Tarikh Pegawai & Cop :', 29.7, 129.5, { size: 8.5 }); V(doc, (r.endorsedAt || '').slice(0, 10), 29.7 + wp + 1.5, 129.5, 30);
     if (r.phcDecisionBy) T(doc, 'Keputusan oleh: ' + r.phcDecisionBy + (r.phcDecisionAt ? ' (' + r.phcDecisionAt + ')' : ''), 29.7, 141.0, { size: 6.5, color: GREY });
-    if (r.endorsedBy) T(doc, 'Diendors oleh: ' + r.endorsedBy + (r.endorsedAt ? ' (' + r.endorsedAt + ')' : ''), 29.7, 144.2, { size: 6.5, color: GREY });
+    if (r.endorsedBy) T(doc, 'Endorsed by: ' + r.endorsedBy + (r.endorsedAt ? ' (' + r.endorsedAt + ')' : ''), 29.7, 144.2, { size: 6.5, color: GREY });
 
     var dots = '..........................................';
     var w1 = T(doc, '1. Nama Pemandu 1 :', 108.7, 101.0, { size: 8.5 }); T(doc, dots, 108.7 + w1 + 1, 101.0, { size: 8.5 }); V(doc, r.driver1, 108.7 + w1 + 2, 100.6, 185 - 108.7 - w1 - 3);

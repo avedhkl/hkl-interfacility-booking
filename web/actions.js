@@ -55,12 +55,12 @@
         });
       };
     } else if (role === C.ROLES.ADMIN && r.status === C.STATUS.LULUS) {
-      el.innerHTML = '<div class="card"><p class="sec-h">Endorsan Admin PHC</p>' +
-        '<p class="hint" style="margin:0 0 10px">Endors untuk menjadikan permohonan ini sedia untuk tuntutan pemandu.</p>' +
-        '<div class="banner aerr" hidden></div><button class="btn block" id="ebtn">Endors (Sedia untuk Tuntutan)</button></div>';
+      el.innerHTML = '<div class="card"><p class="sec-h">Admin PHC: Endorse for Claim</p>' +
+        '<p class="hint" style="margin:0 0 10px">Endorse to make this request ready for the driver\'s claim.</p>' +
+        '<div class="banner aerr" hidden></div><button class="btn block" id="ebtn">Endorse for Claim</button></div>';
       $('#ebtn').onclick = function () {
         errBox('');
-        if (!window.confirm('Endors ' + r.id + '?')) return;
+        if (!window.confirm('Endorse for Claim: ' + r.id + '?')) return;
         ctx.busy($('#ebtn'), async function () {
           try { done(await ctx.api('endorse', ctx.authP({ id: r.id }))); } catch (e) { errBox(e.message); }
         });
@@ -92,7 +92,7 @@
     } else if (r.status === C.STATUS.MENUNGGU) {
       el.innerHTML = '<div class="card hint">Pending Approval: menunggu keputusan Penyelia PHC.</div>';
     } else if (r.status === C.STATUS.LULUS) {
-      el.innerHTML = '<div class="card hint">Approved. Menunggu endorsan Admin PHC.</div>';
+      el.innerHTML = '<div class="card hint">Approved. Waiting for Admin PHC to endorse for claim.</div>';
     } else {
       el.innerHTML = '';
     }

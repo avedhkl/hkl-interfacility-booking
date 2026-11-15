@@ -140,7 +140,7 @@
       '<button class="btn sm sec" id="arch">' + (arch ? 'Senarai aktif' : 'Archive') + '</button>' +
       (!isPHC() ? '<label style="margin:0;font-weight:400"><input type="checkbox" id="mine"' + (S.mine ? ' checked' : '') + '> Saya sahaja</label>' : '') +
       '<span id="upd"></span></div>' +
-      (arch ? '<p class="hint">Archive: kes Diendors / Tidak Lulus lebih ' + C.ARCHIVE_HOURS + ' jam. Rekod tidak pernah dipadam.</p>' : '') +
+      (arch ? '<p class="hint">Archive: cases Endorsed / Not Approved lebih ' + C.ARCHIVE_HOURS + ' jam. Rekod tidak pernah dipadam.</p>' : '') +
       '<div id="items"></div>' +
       (!isPHC() && !arch ? '<a class="btn fab" href="#/baru">+ Permohonan Baru</a>' : '');
     $('#rf').onclick = function () { refresh(S.scope); };
@@ -165,7 +165,7 @@
     if (!all) { st.innerHTML = ''; items.innerHTML = '<div class="empty">Memuatkan senarai...</div>'; return; }
     var count = function (s) { return all.filter(function (r) { return r.status === s; }).length; };
     var cards = [['all', 'Jumlah Tempahan Kenderaan', all.length], [C.STATUS.MENUNGGU, 'Pending Approval', count(C.STATUS.MENUNGGU)], [C.STATUS.LULUS, 'Approved', count(C.STATUS.LULUS)],
-      [C.STATUS.TIDAK_LULUS, 'Not Approved', count(C.STATUS.TIDAK_LULUS)], [C.STATUS.DIENDORS, 'Tuntutan Claim Ready', count(C.STATUS.DIENDORS)]];
+      [C.STATUS.TIDAK_LULUS, 'Not Approved', count(C.STATUS.TIDAK_LULUS)], [C.STATUS.DIENDORS, 'Endorsed for Claim', count(C.STATUS.DIENDORS)]];
     st.innerHTML = cards.map(function (c) {
       return '<button class="stat' + (S.filter === c[0] ? ' on' : '') + '" data-f="' + esc(c[0]) + '"><b>' + c[2] + '</b><span>' + esc(c[1]) + '</span></button>';
     }).join('');
@@ -214,7 +214,7 @@
       if (r.phcDecisionAt) {
         h += '<div class="card"><p class="sec-h">C. Kegunaan Pejabat</p>' + kv([['Keputusan', r.status === C.STATUS.TIDAK_LULUS ? C.label(C.STATUS.TIDAK_LULUS) : C.label(C.STATUS.LULUS)],
           ['Oleh', r.phcDecisionBy], ['Pada', r.phcDecisionAt], ['Ulasan', r.phcUlasan], ['Pemandu 1', r.driver1], ['Pemandu 2', r.driver2],
-          ['No. Telefon', r.driverPhone], ['No. Kenderaan', r.vehicleNo], ['Diendors oleh', r.endorsedBy], ['Diendors pada', r.endorsedAt]]) + '</div>';
+          ['No. Telefon', r.driverPhone], ['No. Kenderaan', r.vehicleNo], ['Endorsed by', r.endorsedBy], ['Endorsed at', r.endorsedAt]]) + '</div>';
       }
       h += '<div class="card"><p class="sec-h">Gambar Borang (bertandatangan)</p>' + (r.hasPhoto ?
         '<button class="btn sec sm" id="ph">Lihat gambar</button><div id="phbox"></div>' : '<p class="hint">Tiada gambar.</p>') + '</div>';

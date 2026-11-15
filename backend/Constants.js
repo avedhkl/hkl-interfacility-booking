@@ -4,7 +4,7 @@
  *   backend/Constants.js   and   web/constants.js
  */
 var HKL = {
-  APP_VERSION: '0.3.4',
+  APP_VERSION: '0.3.5',
   TZ: 'Asia/Kuala_Lumpur',
   ID_PREFIX: 'KDR',
   ARCHIVE_HOURS: 48,
@@ -47,7 +47,7 @@ HKL.STATUS_LABEL = {};
 HKL.STATUS_LABEL[HKL.STATUS.MENUNGGU] = 'Pending Approval';
 HKL.STATUS_LABEL[HKL.STATUS.LULUS] = 'Approved';
 HKL.STATUS_LABEL[HKL.STATUS.TIDAK_LULUS] = 'Not Approved';
-HKL.STATUS_LABEL[HKL.STATUS.DIENDORS] = 'Tuntutan Claim Ready';
+HKL.STATUS_LABEL[HKL.STATUS.DIENDORS] = 'Endorsed for Claim';
 HKL.label = function (s) { return HKL.STATUS_LABEL[s] || s; };
 
 if (typeof module !== 'undefined' && module.exports) { module.exports = HKL; }
