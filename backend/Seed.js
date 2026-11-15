@@ -10,6 +10,22 @@ function seedDummyVehicles() {
   applyVehiclePins();
 }
 
+/** DUMMY: two extra approved cases for WXX 1234 (patients from different wards) to test multi-patient trips. Idempotent. */
+function seedDummyTrip() {
+  const rt = readTable_('Requests'), at = readTable_('Ambulance');
+  const base = { Jawatan: 'Pegawai Perubatan', BhgUnit: 'Wad DUMMY', TelBimbit: '0123456789', JenisKenderaan: 'Ambulans', BilPenumpang: 1, BilKenderaan: 1,
+    Tujuan: 'DUMMY - rujukan', TempatDituju: 'Hospital DUMMY', TempatMenunggu: 'Lobi HKL', TarikhPergi: '2026-12-01', MasaPergi: '09:00',
+    TarikhBalik: '2026-12-01', MasaBalik: '2.00 petang', Status: HKL.STATUS.LULUS, PHCDecisionBy: 'DUMMY Penyelia', PHCDecisionAt: new Date(),
+    DriverName1: 'DUMMY Pemandu A', DriverPhone: '0111111111', VehicleNo: 'WXX 1234' };
+  [['KDR-261101-007', 'DUMMY Pesakit Satu', 'Wad 5'], ['KDR-261101-008', 'DUMMY Pesakit Dua', 'Wad 7']].forEach(function (x) {
+    if (rt.rows.some(function (r) { return r.RequestID === x[0]; })) return;
+    appendObj_(rt, Object.assign({}, base, { RequestID: x[0], SubmittedAt: new Date(), ApplicantName: 'DUMMY ' + x[2], TempatMenunggu: x[2] }));
+    appendObj_(at, { RequestID: x[0], TarikhMasaDiperlukan: '01/12/2026 09:00', NamaPesakit: x[1], PeralatanDiperlukan: 'Monitor',
+      KesRujukanDariHospital: 'HKL', KesDirujukKeHospital: 'Hospital DUMMY', KeteranganRingkasKes: 'DUMMY kes', NamaPegawaiPerubatan: 'DUMMY Dr.' });
+  });
+  Logger.log('seedDummyTrip done');
+}
+
 /** DUMMY DATA ONLY. Run manually from the editor. Skips if dummy rows already exist. Never overwrites. */
 function seedDummy() {
   const rt = readTable_('Requests');
