@@ -3,7 +3,7 @@
 (function () {
   'use strict';
   var C = HKL, STEPS = C.MOVE_STEPS, UNDO_MIN = 15, MAX_CASES = 5;
-  var D = { cases: null, places: [], at: 0, loading: false, keys: {}, sel: {} };
+  var D = { cases: null, places: [], at: 0, loading: false, keys: {}, sel: {}, tsel: {} };
   var X; // context from app.js
 
   function esc(s) { return X.esc(s); }
@@ -73,21 +73,35 @@
   }
 
   // Group cases of one state by TripID (cases without a TripID, e.g. old data, stand alone).
-  function groups(state) {
+  // A trip = all started cases sharing a TripID. Each patient has his own timeline, so one trip can hold
+  // patients at different steps (e.g. picked up from different wards, arriving at different times).
+  function tripGroups() {
     var g = {}, order = [];
-    (D.cases || []).filter(function (c) { return c.trip.state === state; }).forEach(function (c) {
+    (D.cases || []).filter(function (c) { return c.trip.state !== 'not_started'; }).forEach(function (c) {
       var k = c.trip.tripId || ('solo:' + c.id);
       if (!g[k]) { g[k] = []; order.push(k); }
       g[k].push(c);
     });
-    return order.map(function (k) { return { key: k, tripId: k.indexOf('solo:') === 0 ? '' : k, cases: g[k] }; });
+    return order.map(function (k) {
+      return { key: k, cases: g[k], open: g[k].some(function (c) { return c.trip.state === 'in_progress'; }) };
+    });
   }
 
   function canUndo(cs) {
-    return cs.every(function (c) {
+    return cs.length && cs.every(function (c) {
       var s = c.trip.steps;
       return s.length && s[s.length - 1].n === cs[0].trip.lastStep && Date.now() - new Date(s[s.length - 1].at).getTime() <= UNDO_MIN * 60000;
     });
+  }
+
+  // Ticked patients inside a trip card. Default: the patients furthest behind (the ones who still need the next step).
+  function tripSel(g) {
+    var cur = D.tsel[g.key];
+    if (cur) { var ok = g.cases.filter(function (c) { return cur[c.id]; }); if (ok.length) return ok; }
+    var open = g.cases.filter(function (c) { return c.trip.state === 'in_progress'; });
+    if (!open.length) return [];
+    var min = Math.min.apply(null, open.map(function (c) { return c.trip.lastStep; }));
+    return open.filter(function (c) { return c.trip.lastStep === min; });
   }
 
   // ---------- paint ----------
@@ -102,14 +116,14 @@
     if (waiting.length === 1 && !Object.keys(D.sel).length && !D.touched) D.sel[waiting[0].id] = true;
 
     var h = '';
-    var active = groups('in_progress');
+    var trips = tripGroups(), active = trips.filter(function (g) { return g.open; });
     if (active.length) h += '<h2>Dalam perjalanan</h2>' + active.map(tripCard).join('');
     if (waiting.length) {
       h += '<h2>Kes menunggu</h2><p class="hint" style="margin:0 0 6px">Tandakan pesakit yang akan dibawa dalam satu perjalanan (maks. ' + MAX_CASES + ').</p>' +
         waiting.map(waitCard).join('') + '<div class="derr banner" id="werr" hidden></div>' +
         '<button class="btn block bigbtn" id="startbtn" data-step="1"></button>';
     }
-    var done = groups('done');
+    var done = trips.filter(function (g) { return !g.open; });
     if (done.length) h += '<h2>Selesai</h2>' + done.map(doneCard).join('');
     box.innerHTML = h;
     paintStart();
@@ -121,6 +135,14 @@
         if (cb.checked && Object.keys(D.sel).length >= MAX_CASES) { cb.checked = false; return werr('Maksimum ' + MAX_CASES + ' kes dalam satu perjalanan.'); }
         if (cb.checked) D.sel[id] = true; else delete D.sel[id];
         werr(''); paintStart();
+      };
+    });
+    Array.prototype.forEach.call(box.querySelectorAll('[data-tsel]'), function (cb) {
+      cb.onchange = function () {
+        var k = cb.getAttribute('data-tsel'), g = tripGroups().filter(function (x) { return x.key === k; })[0];
+        var cur = {}; tripSel(g).forEach(function (c) { cur[c.id] = true; });
+        if (cb.checked) cur[cb.getAttribute('data-id')] = true; else delete cur[cb.getAttribute('data-id')];
+        D.tsel[k] = cur; paint();
       };
     });
     var sb = $('#startbtn');
@@ -177,24 +199,58 @@
       (c.amb && c.amb.patient ? ' &middot; ' + esc(c.amb.patient) : '') + '</span></div>';
   }
 
+  function lastLabel(t) {
+    var l = t.steps[t.steps.length - 1];
+    return l ? STEPS[l.n - 1].label + ' &middot; ' + esc(l.time) + (l.lat == null ? ' &middot; tiada GPS' : '') : '';
+  }
+
+  // One patient line in a trip: tick box + where this patient is now.
+  function patientRow(g, c, checked) {
+    var done = c.trip.state === 'done';
+    return '<label class="prow' + (checked ? ' on' : '') + '"><input type="checkbox" data-tsel="' + esc(g.key) + '" data-id="' + esc(c.id) + '"' + (checked ? ' checked' : '') + '>' +
+      '<div class="pbody"><div><b>' + esc(c.id) + '</b> <span class="hint">' + esc(c.amb && c.amb.patient ? c.amb.patient + ' &middot; ' : '') + esc(c.pickup) + '</span></div>' +
+      '<div class="pstat' + (done ? ' ok' : '') + '">' + (done ? '&#10003; ' : '') + lastLabel(c.trip) + '</div></div></label>';
+  }
+
   function tripCard(g) {
-    var cs = g.cases, t = cs[0].trip, ids = cs.map(function (c) { return c.id; }).join(','), s = STEPS[t.nextStep - 1];
-    return '<div class="card dtrip" data-trip="' + esc(g.key) + '"><div class="row"><b>' + (cs.length > 1 ? cs.length + ' kes dalam satu perjalanan' : esc(cs[0].id)) +
-      '</b><span class="badge b-end">Dalam perjalanan</span></div>' +
-      '<div class="tcases">' + cs.map(caseLine).join('') + '</div>' + stepper(t) + flagsOf(cs) +
-      (s ? '<button class="btn block bigbtn" data-ids="' + esc(ids) + '" data-step="' + t.nextStep + '">' + esc(s.label) + '<small>' + esc(s.hint) + '</small></button>' : '') +
-      '<div class="derr banner" hidden></div>' +
-      (canUndo(cs) ? '<button class="linkbtn" data-undo="' + esc(ids) + '">Batalkan langkah terakhir</button>' : '') + '</div>';
+    var cs = g.cases, multi = cs.length > 1, sel = tripSel(g), selIds = {};
+    sel.forEach(function (c) { selIds[c.id] = true; });
+    var steps = sel.map(function (c) { return c.trip.lastStep; }), same = steps.length && steps.every(function (x) { return x === steps[0]; });
+    var next = same && sel[0].trip.nextStep, s = next ? STEPS[next - 1] : null;
+    var ids = sel.map(function (c) { return c.id; }).join(',');
+    var h = '<div class="card dtrip" data-trip="' + esc(g.key) + '"><div class="row"><b>' + (multi ? cs.length + ' pesakit dalam satu perjalanan' : esc(cs[0].id)) +
+      '</b><span class="badge b-end">Dalam perjalanan</span></div>';
+    if (multi) {
+      h += '<p class="hint" style="margin:6px 0">Tandakan pesakit yang sampai / bergerak sekarang. Setiap pesakit ada masa sendiri.</p>' +
+        '<div class="prows">' + cs.map(function (c) { return patientRow(g, c, !!selIds[c.id]); }).join('') + '</div>';
+    } else {
+      h += '<div class="tcases">' + caseLine(cs[0]) + '</div>' + stepper(cs[0].trip);
+    }
+    h += flagsOf(cs);
+    if (s) {
+      h += '<button class="btn block bigbtn" data-ids="' + esc(ids) + '" data-step="' + next + '">' + esc(s.label) +
+        '<small>' + (multi ? sel.length + ' pesakit &middot; ' : '') + esc(s.hint) + '</small></button>';
+    } else if (multi) {
+      h += '<p class="hint" style="margin:8px 0 0">' + (sel.length ? 'Pesakit yang ditandakan berada pada langkah berbeza. Tandakan pesakit pada langkah yang sama.' : 'Tandakan sekurang-kurangnya seorang pesakit.') + '</p>';
+    }
+    h += '<div class="derr banner" hidden></div>';
+    if (sel.length && canUndo(sel)) h += '<button class="linkbtn" data-undo="' + esc(ids) + '">Batalkan langkah terakhir' + (multi ? ' (' + sel.length + ' pesakit)' : '') + '</button>';
+    return h + '</div>';
   }
 
   function doneCard(g) {
-    var cs = g.cases, t = cs[0].trip, ids = cs.map(function (c) { return c.id; }).join(',');
-    return '<div class="card dtrip" data-trip="' + esc(g.key) + '"><div class="row"><b>' + (cs.length > 1 ? cs.length + ' kes' : esc(cs[0].id)) + '</b><span class="badge b-ok">Selesai</span></div>' +
-      '<div class="tcases">' + cs.map(caseLine).join('') + '</div>' +
-      '<p class="hint" style="margin:8px 0 0">&#10003; ' + (t.steps.length ? esc(t.steps[0].time) + ' &ndash; ' + esc(t.steps[t.steps.length - 1].time) : '') +
-      (t.mins.total != null ? ' &middot; ' + t.mins.total + ' minit' : '') + (t.steps[0] && t.steps[0].driver ? ' &middot; ' + esc(t.steps[0].driver) : '') + '</p>' +
-      '<div class="derr banner" hidden></div>' +
-      (canUndo(cs) ? '<button class="linkbtn" data-undo="' + esc(ids) + '">Batalkan langkah terakhir</button>' : '') + '</div>';
+    var cs = g.cases, all = cs.map(function (c) { return c.id; }).join(',');
+    var firstT = cs.map(function (c) { return c.trip.steps[0]; }).filter(Boolean).sort(function (a, b) { return a.at < b.at ? -1 : 1; })[0];
+    var lastT = cs.map(function (c) { return c.trip.steps[c.trip.steps.length - 1]; }).filter(Boolean).sort(function (a, b) { return a.at < b.at ? 1 : -1; })[0];
+    var h = '<div class="card dtrip" data-trip="' + esc(g.key) + '"><div class="row"><b>' + (cs.length > 1 ? cs.length + ' pesakit' : esc(cs[0].id)) + '</b><span class="badge b-ok">Selesai</span></div>' +
+      '<div class="tcases">' + cs.map(function (c) {
+        return caseLine(c) + '<div class="hint" style="margin:0 0 4px 0">&#10003; ' + esc(c.trip.steps[0].time) + ' &ndash; ' + esc(c.trip.steps[c.trip.steps.length - 1].time) +
+          (c.trip.mins.total != null ? ' &middot; ' + c.trip.mins.total + ' minit' : '') + '</div>';
+      }).join('') + '</div>' +
+      '<p class="hint" style="margin:6px 0 0">' + (firstT && lastT ? esc(firstT.time) + ' &ndash; ' + esc(lastT.time) : '') + (firstT && firstT.driver ? ' &middot; ' + esc(firstT.driver) : '') + '</p>' +
+      '<div class="derr banner" hidden></div>';
+    if (canUndo(cs)) h += '<button class="linkbtn" data-undo="' + esc(all) + '">Batalkan langkah terakhir</button>';
+    return h + '</div>';
   }
 
   function cardErr(ids, msg) {
@@ -223,6 +279,7 @@
           lat: fix ? fix.lat : '', lng: fix ? fix.lng : '', accuracy: fix ? fix.accuracy : '' }));
         delete D.keys[kk];
         if (step === 1) { D.sel = {}; D.touched = false; }
+        D.tsel = {};
         replaceCases(res.cases); paint();
       } catch (e) {
         if (authFail(e)) return;
@@ -235,7 +292,7 @@
   async function doUndo(ids, btn) {
     if (!window.confirm('Batalkan langkah terakhir (' + ids.join(', ') + ')?')) return;
     await X.busy(btn, async function () {
-      try { var res = await X.api('driverUndo', creds({ ids: ids })); replaceCases(res.cases); paint(); }
+      try { var res = await X.api('driverUndo', creds({ ids: ids })); D.tsel = {}; replaceCases(res.cases); paint(); }
       catch (e) { if (authFail(e)) return; cardErr(ids, e.message); }
     });
   }
