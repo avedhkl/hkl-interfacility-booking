@@ -4,7 +4,7 @@
  *   backend/Constants.js   and   web/constants.js
  */
 var HKL = {
-  APP_VERSION: '0.5.0',
+  APP_VERSION: '0.6.0',
   TZ: 'Asia/Kuala_Lumpur',
   ID_PREFIX: 'KDR',
   ARCHIVE_HOURS: 48,

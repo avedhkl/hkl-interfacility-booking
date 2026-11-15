@@ -74,6 +74,7 @@
     if (!S.session) return renderLogin();
     if (S.session.role === C.ROLES.DRIVER) return window.renderDriver({ S: S, api: api, busy: busy, banner: banner, esc: esc, view: view, store: store, paintWho: paintWho, logout: logout });
     var h = location.hash || '#/';
+    if (h === '#/armada' && isPHC()) return window.renderFleet({ S: S, api: api, authP: authP, banner: banner, esc: esc, view: view, paintWho: paintWho, logout: logout });
     if (h.indexOf('#/r/') === 0) return renderDetail(decodeURIComponent(h.slice(4)));
     if (h === '#/baru' && !isPHC()) return renderForm();
     renderList();
@@ -159,6 +160,7 @@
     loadCache(S.scope);
     var arch = S.scope === 'archive';
     view.innerHTML = '<div class="stats" id="stats"></div>' +
+      (isPHC() ? '<a class="btn block" id="fleetbtn" href="#/armada" style="margin-bottom:8px">Vehicle Movement Monitor</a>' : '') +
       '<div class="tools"><button class="btn sm sec" id="rf">Refresh</button>' +
       '<button class="btn sm sec" id="arch">' + (arch ? 'Senarai aktif' : 'Archive') + '</button>' +
       (!isPHC() ? '<label style="margin:0;font-weight:400"><input type="checkbox" id="mine"' + (S.mine ? ' checked' : '') + '> Saya sahaja</label>' : '') +

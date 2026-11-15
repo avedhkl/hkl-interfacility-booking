@@ -85,4 +85,20 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--pri);border-colo
 .tcase{margin:3px 0;font-size:14px}
 .tcases{margin:6px 0 4px}
 .linkbtn{display:block;margin:12px auto 0;background:none;border:0;color:var(--mut);text-decoration:underline;font:inherit;font-size:13px;cursor:pointer}
+.fdate input{min-width:150px}
+.fsum{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin:6px 0 10px}
+.fstat{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px 2px;text-align:center;font:inherit;color:inherit}
+.fstat b{display:block;font-size:20px}.fstat span{font-size:11px;color:var(--mut);line-height:1.15}
+.fstat.ok b{color:var(--ok)}.fstat.info b{color:var(--end)}.fstat.bad b{color:var(--bad)}
+button.fstat{cursor:pointer}.fstat.on{outline:2px solid var(--bad)}
+.fveh .fplate{font-size:18px}.fcnt{font-size:12px;color:var(--mut);text-align:right}.fbad{color:var(--bad);font-weight:700}
+.fveh .hint a{color:var(--pri)}
+.fgroup{border-top:1px solid var(--line);margin-top:10px;padding-top:8px}
+.ftrip{font-size:12px;color:var(--end);font-weight:700;margin-bottom:4px}
+.fcase{margin:6px 0 10px;font-size:14px}
+.ftl{list-style:none;display:grid;grid-template-columns:repeat(6,1fr);gap:2px;margin:6px 0 2px;padding:0}
+.ftl li{text-align:center;font-size:11px;color:var(--mut);display:flex;flex-direction:column;align-items:center;gap:1px}
+.ftl i{font-style:normal;width:20px;height:20px;border-radius:50%;border:1.5px solid var(--line);display:inline-flex;align-items:center;justify-content:center;font-weight:700}
+.ftl li.on{color:var(--ink)}.ftl li.on i{background:var(--ok);border-color:var(--ok);color:var(--card)}
+.ftl sup{color:var(--end);font-weight:700}
 a.back{display:inline-block;margin:8px 0;color:var(--pri);font-weight:600;text-decoration:none;cursor:pointer}
